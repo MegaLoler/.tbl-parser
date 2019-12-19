@@ -1,0 +1,44 @@
+; this is a test table file!!
+
+; start a table
+; the name is 'test table'
+; its version 1
+; and it consists of rows with items called a, b, and c
+# "test table" 1 "a b c" ; online comment
+
+; here are a few rows in that table
+1 2 3
+the second row
+"this is" "also" 'a row (the third one in fact)'
+'you can "nest these"' yep yo
+
+## this is "also a valid row???"
+; alth now u cant have empty rows bc itll think its implied third heading lol
+## so-u-must-continue-with-this-untul-next-low-heading _ _
+## ^ "that means" ditto
+
+; heres version two of that table (completely different actually LOL)
+# "test table" 2 "a b: c"
+; this time we consist of blocks with items a and b in their headers, 
+; each of which contains rows with a single item calld c
+
+## here "is a block"
+and-this-is-c
+another-c
+
+# "test table" 3 "A B: C" ; case retaining
+; this time we will use the "no # level" (which is interpreted as the final level)
+; meaning its impossible to nest deeper, so that there will be NO ITEMS in such blocks!!
+this is-a-block
+but-as-you-can-see 'its impossible to nest deeper bc we are already as deep as possible this way!'
+
+## so "instead we have to do this"
+'so now we have a c'
+'and another!'
+^
+^
+^
+lol
+?
+_
+^
