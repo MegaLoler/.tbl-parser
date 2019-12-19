@@ -7,17 +7,17 @@ import io
 
 ### TOKENIZER ###
 
+def peek(stream):
+    c = stream.peek()
+    return c, len(c)
+
 def consume(stream, predicate, peek_func=None):
     '''Consume bytes from a stream as long as a condition is met.'''
 
-    def peek(stream):
-        return stream.peek(), 1
-
     token = ''
-
     while True:
         chunk, size = (peek_func or peek)(stream)
-        if chunk and predicate(chunk):
+        if size and predicate(chunk):
             stream.read(size)
             token += chunk
         else:
@@ -25,21 +25,15 @@ def consume(stream, predicate, peek_func=None):
 
     return token
 
-def is_ignorable_space(c):
-    '''Whether a character is consider unimportant whitespace.'''
-
-    # everything except newlines
-    return c.isspace() and c != '\n'
-
 def consume_whitespace(stream, *args, **kwargs):
     '''Consume bytes from a stream until no more whitespace is found.'''
 
-    return consume(stream, is_ignorable_space, *args, **kwargs)
+    return consume(stream, lambda c: c.isspace(), *args, **kwargs)
 
 def consume_not_whitespace(stream, *args, **kwargs):
     '''Consume bytes from a stream until whitespace is found.'''
 
-    return consume(stream, lambda c: not is_ignorable_space(c), *args, **kwargs)
+    return consume(stream, lambda c: not c.isspace(), *args, **kwargs)
 
 def consume_in(stream, chars, *args, **kwargs):
     '''Consume bytes as long as they are in a given set of characters.'''
@@ -59,9 +53,9 @@ def consume_line(stream, *args, **kwargs):
 def consume_delimited(stream, delimiter):
     '''Consume a delimited string until the non-escaped delimiter is found.'''
 
-    def peek(stream):
+    def peek_escape(stream):
         c = stream.peek()
-        return ((stream.read(1) and stream.peek()) if c == '\\' else c), 1
+        return ((stream.read(1) and stream.peek()) if c == '\\' else c), len(c)
 
     def read_delimiter():
         assert(stream.read(1) == delimiter)
@@ -70,7 +64,7 @@ def consume_delimited(stream, delimiter):
     read_delimiter()
 
     # read until the final delimiter
-    string = consume_not_in(stream, delimiter, peek_func=peek)
+    string = consume_not_in(stream, delimiter, peek_func=peek_escape)
 
     # read the final delimiter
     read_delimiter()
@@ -81,18 +75,15 @@ def consume_token(stream):
     '''Consume and return a single token from a stream.'''
 
     def peek_strip(stream):
-        '''Look out for comments and multiple newlines and ignore them.'''
+        '''Look out for comments and ignore them.'''
 
         # strip comments
-        if stream.peek() in ';\n':
-            while stream.peek() in ';\n':
-                consume_line(stream)
-                stream.read(1)
-            stream.seek(stream.tell() - 1)
+        while stream.peek() == ';':
+            consume_line(stream)
 
-        return stream.peek(), 1
+        return peek(stream)
 
-    def peek(stream):
+    def peek_token(stream):
         c = peek_strip(stream)[0]
 
         def peek_delimited():
@@ -102,13 +93,19 @@ def consume_token(stream):
             return token, len(token) + 2
 
         # check for string delimiters
-        return peek_delimited() if c in ''''"''' else (c, 1)
+        return peek_delimited() if c and c in ''''"''' else (c, len(c))
+
+    # newlines are their own token
+    # consolodate multiple newlines into one
+    if stream.peek() == '\n':
+        consume_in(stream, '\n')
+        return '\n'
 
     # discard leading whitespace
     consume_whitespace(stream, peek_func=peek_strip)
 
     # consume until whitespace (catching quoted text as well)
-    return consume_not_whitespace(stream, peek_func=peek)
+    return consume_not_whitespace(stream, peek_func=peek_token)
 
 def tokens(stream):
     '''Yield tokens from a stream.'''
@@ -179,10 +176,4 @@ if __name__ == '__main__':
     else:
         with open(sys.argv[1]) as f:
             for token in tokens(f):
-                print('1st', f'"{token}"')
-                break
-
-            for token in tokens(f):
-                print('2nd', f'"{token}"')
-                break
-
+                print(token)
