@@ -3,8 +3,9 @@
 import sys
 import io
 
-# the spec string of tables themselves
-TABLE_SCHEMA = '"table name" version schema'
+
+
+### TOKENIZER ###
 
 def consume(stream, predicate, peek_func=None):
     '''Consume bytes from a stream as long as a condition is met.'''
@@ -24,15 +25,21 @@ def consume(stream, predicate, peek_func=None):
 
     return token
 
+def is_ignorable_space(c):
+    '''Whether a character is consider unimportant whitespace.'''
+
+    # everything except newlines
+    return c.isspace() and c != '\n'
+
 def consume_whitespace(stream, *args, **kwargs):
     '''Consume bytes from a stream until no more whitespace is found.'''
 
-    return consume(stream, lambda c: c.isspace(), *args, **kwargs)
+    return consume(stream, is_ignorable_space, *args, **kwargs)
 
 def consume_not_whitespace(stream, *args, **kwargs):
     '''Consume bytes from a stream until whitespace is found.'''
 
-    return consume(stream, lambda c: not c.isspace(), *args, **kwargs)
+    return consume(stream, lambda c: not is_ignorable_space(c), *args, **kwargs)
 
 def consume_in(stream, chars, *args, **kwargs):
     '''Consume bytes as long as they are in a given set of characters.'''
@@ -73,16 +80,20 @@ def consume_delimited(stream, delimiter):
 def consume_token(stream):
     '''Consume and return a single token from a stream.'''
 
-    def peek_comment(stream):
-        '''Look out for comments and ignore them.'''
+    def peek_strip(stream):
+        '''Look out for comments and multiple newlines and ignore them.'''
 
-        while stream.peek() == ';':
-            consume_line(stream)
+        # strip comments
+        if stream.peek() in ';\n':
+            while stream.peek() in ';\n':
+                consume_line(stream)
+                stream.read(1)
+            stream.seek(stream.tell() - 1)
 
         return stream.peek(), 1
 
     def peek(stream):
-        c = peek_comment(stream)[0]
+        c = peek_strip(stream)[0]
 
         def peek_delimited():
             pos = stream.tell()
@@ -94,7 +105,7 @@ def consume_token(stream):
         return peek_delimited() if c in ''''"''' else (c, 1)
 
     # discard leading whitespace
-    consume_whitespace(stream, peek_func=peek_comment)
+    consume_whitespace(stream, peek_func=peek_strip)
 
     # consume until whitespace (catching quoted text as well)
     return consume_not_whitespace(stream, peek_func=peek)
@@ -124,11 +135,43 @@ def tokenize_string(string):
 
     return tokens(io.StringIO(string))
 
+
+
+### TABLE SCHEMAS ###
+
+# the spec string of tables themselves
+TABLE_SCHEMA = '"table name" version schema'
+
 class Schema:
     '''Represents a schema for a hierarchical table.'''
 
     def __init__(self, spec: str):
         '''Parse a schema from a spec string.'''
+
+
+
+### PARSER ###
+
+class Block:
+    '''Represents a parsed block.'''
+
+    @classmethod
+    def read(cls, stream: str, schema: Schema):
+        '''Parse a block from a stream according to a schema.'''
+
+    @classmethod
+    def parse(cls, string: str, schema: Schema):
+        '''Parse a block from a string according to a schema.'''
+
+        return cls.read(io.StringIO(string), schema);
+
+    def __init__(self, header: dict, children: list):
+        self.header = header     # the header field values
+        self.children = children # the sub-elements
+
+
+
+### MAIN ###
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
@@ -136,4 +179,10 @@ if __name__ == '__main__':
     else:
         with open(sys.argv[1]) as f:
             for token in tokens(f):
-                print(token)
+                print('1st', f'"{token}"')
+                break
+
+            for token in tokens(f):
+                print('2nd', f'"{token}"')
+                break
+
