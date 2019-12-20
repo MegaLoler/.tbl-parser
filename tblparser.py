@@ -236,8 +236,11 @@ def read_dict(stream):
 ### MAIN ###
 
 if __name__ == '__main__':
-    if len(sys.argv) < 2:
+    args = sys.argv[1:]
+    if len(args) == 0:
         print('Please specify the path to the file you want to parse.')
     else:
-        with open(sys.argv[1]) as f:
-            pprint.PrettyPrinter(sort_dicts=False).pprint(read_dict(f))
+        for arg in args:
+            print(f'{arg}:')
+            with open(arg) as f:
+                pprint.PrettyPrinter(sort_dicts=False).pprint(read_dict(f))

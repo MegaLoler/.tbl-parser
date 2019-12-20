@@ -8,6 +8,7 @@ messy notes lol:
 - _ means NULL
 - ? means UNKNOWN (different from null!!!)
 - ^ means DITTO
+- = means DITTO (horizontal, it means the last thing)
 - ' and " are the two string delimiters, can be used exchangable and nested alternatively
 - thins are space separated and spacing is IGNORED otherwise, excetp quotede things ofc, like bash!!
 - ; is comment
