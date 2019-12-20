@@ -2,6 +2,7 @@
 
 import sys
 import io
+import pprint
 
 
 
@@ -105,7 +106,6 @@ def consume_token(stream, peek_func=peek, discrete_tokens=''):
     consume_whitespace(stream, peek_func=peek_strip)
 
     # consume until whitespace or discrete token (catching quoted text as well)
-#    return consume_not_whitespace(stream, peek_func=peek_token)
     return consume(stream, lambda c: not c.isspace() and c not in discrete_tokens, peek_func=peek_token)
 
 def tokens(stream, peek_func=peek, discrete_tokens=''):
@@ -226,6 +226,11 @@ class Block:
     def __getitem__(self, item):
         return self.dict[item]
 
+def read_dict(stream):
+    '''Parse a list of blocks from a stream and return the dictionary representation.'''
+
+    return list(block.dict for block in Block.read_all(stream))
+
 
 
 ### MAIN ###
@@ -235,5 +240,4 @@ if __name__ == '__main__':
         print('Please specify the path to the file you want to parse.')
     else:
         with open(sys.argv[1]) as f:
-            import pprint
-            pprint.PrettyPrinter().pprint(list(block.dict for block in Block.read_all(f)))
+            pprint.PrettyPrinter(sort_dicts=False).pprint(read_dict(f))
