@@ -238,7 +238,7 @@ def read_dict(stream):
 if __name__ == '__main__':
     args = sys.argv[1:]
     if len(args) == 0:
-        print('Please specify the path to the file you want to parse.')
+        print('Please specify the path(s) to the file(s) you want to parse.')
     else:
         for arg in args:
             print(f'{arg}:')
