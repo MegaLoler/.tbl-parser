@@ -18,7 +18,9 @@ messy notes lol:
 - case retaining
 
 
-TODO: replace "ditto" (^ character) with copies of the data from the previous row
+TODO:
+- replace "ditto" (^ character) with copies of the data from the previous row
+- incorporate line breaks after rows as sanity checks
 
 
 ## EXAMPLE
